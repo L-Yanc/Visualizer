@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GeoGebra Multi-Sensor Plot</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta charset="utf-8"/>
+    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+</head>
+<body>
+    <h1>GeoGebra Multi-Sensor Plot</h1>
+    <p>This example shows how to embed a GeoGebra applet to visualize multi-sensor data in 3D.</p>
+
+    <div id="ggb-element" style="width: 800px; height: 600px;"></div>
+
+    <script>
+        var ggbApplet;
+
+        function ggbOnInit() {
+            console.log("GeoGebra applet loaded successfully.");
+            fetchDataAndPlot(); // Fetch sensor data and plot it
+        }
+
+        function initGeoGebra() {
+            var params = {
+                "appName": "3d",
+                "width": 800,
+                "height": 600,
+                "showToolBar": true,
+                "showAlgebraInput": true,
+                "showMenuBar": true,
+                "showResetIcon": true,
+                "language": "en",
+                "ggbOnInit": "ggbOnInit" // Callback when applet is initialized
+            };
+
+            ggbApplet = new GGBApplet(params, true);
+
+            window.addEventListener("load", function() {
+                console.log("Injecting GeoGebra applet...");
+                ggbApplet.inject('ggb-element');
+            });
+        }
+
+        function fetchDataAndPlot() {
+            console.log("Fetching sensor data...");
+            fetch('sensor_data.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Sensor data fetched successfully. Plotting data...");
+                    console.log("Fetched Data: ", data);
+                    data.forEach((sensorData, sensorIndex) => {
+                        sensorData.forEach((point, pointIndex) => {
+                            const { x, y, z, color } = point;
+                            const pointName = `A_${sensorIndex}_${pointIndex}`;
+                            console.log(`Plotting point ${pointName} at (${x}, ${y}, ${z}) with color ${color}`);
+                            
+                            // Evaluate commands and log results
+                            ggbApplet.evalCommand(`${pointName} = (${x}, ${y}, ${z})`, function() {
+                                console.log(`Point ${pointName} created.`);
+                            }, function(error) {
+                                console.error(`Error creating point ${pointName}: ${error}`);
+                            });
+                            
+                            ggbApplet.evalCommand(`SetColor(${pointName}, "${color}")`, function() {
+                                console.log(`Color set for ${pointName}`);
+                            }, function(error) {
+                                console.error(`Error setting color for ${pointName}: ${error}`);
+                            });
+                            
+                            ggbApplet.evalCommand(`SetPointStyle(${pointName}, 1)`, function() {
+                                console.log(`Point style set for ${pointName}`);
+                            }, function(error) {
+                                console.error(`Error setting point style for ${pointName}: ${error}`);
+                            });
+                            
+                            ggbApplet.evalCommand(`SetPointSize(${pointName}, 5)`, function() {
+                                console.log(`Point size set for ${pointName}`);
+                            }, function(error) {
+                                console.error(`Error setting point size for ${pointName}: ${error}`);
+                            });
+                        });
+                    });
+                })
+                .catch(error => console.error('Error loading the data:', error));
+        }
+
+        // Initialize GeoGebra applet
+        initGeoGebra();
+    </script>
+</body>
+</html>
